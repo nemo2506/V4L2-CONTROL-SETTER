@@ -1,0 +1,172 @@
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  .wrap{padding:1rem 0;font-family:monospace;background:#1a1a1a;color:#e0e0e0;border-radius:10px;padding:1.2rem;}
+  h2{font-size:17px;font-weight:500;color:#f0f0f0;margin:0 0 4px;}
+  .sub{font-size:12px;color:#888;margin:0 0 1.4rem;}
+  .section-title{font-size:11px;font-weight:500;color:#666;text-transform:uppercase;letter-spacing:0.07em;margin:0 0 10px;}
+  .ctrl{display:grid;grid-template-columns:190px 1fr 52px;align-items:center;gap:8px;margin-bottom:8px;}
+  .ctrl label{font-size:12px;color:#aaa;}
+  .ctrl .val{font-size:12px;font-weight:500;color:#e0e0e0;text-align:right;font-family:monospace;}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:#333;border-radius:2px;outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#4caf93;cursor:pointer;}
+  input[type=range]:disabled::-webkit-slider-thumb{background:#444;}
+  .ctrl-bool{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .ctrl-bool label{font-size:12px;color:#aaa;}
+  .ctrl-select{display:grid;grid-template-columns:190px 1fr;align-items:center;gap:8px;margin-bottom:8px;}
+  .ctrl-select label{font-size:12px;color:#aaa;}
+  select{font-family:monospace;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#e0e0e0;}
+  hr{border:none;border-top:1px solid #2a2a2a;margin:1.2rem 0;}
+  .cmd-block{background:#111;border-radius:8px;padding:.9rem 1rem;font-family:monospace;font-size:12px;color:#b0ffcc;white-space:pre;overflow-x:auto;line-height:1.9;}
+  .btn-row{display:flex;gap:8px;margin-top:.9rem;flex-wrap:wrap;}
+  button{font-family:monospace;font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid #333;background:#222;color:#ccc;cursor:pointer;}
+  button:hover{background:#2d2d2d;color:#fff;}
+  button.primary{background:#4caf93;color:#111;border-color:#4caf93;font-weight:600;}
+  button.primary:hover{background:#5cc9a7;}
+  .badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:5px;background:#2a2a2a;color:#888;margin-left:6px;vertical-align:middle;}
+  .badge.ok{background:#1a3d30;color:#4caf93;}
+  .toggle{position:relative;display:inline-block;width:34px;height:18px;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .slider-t{position:absolute;cursor:pointer;inset:0;background:#333;border-radius:18px;transition:.2s;}
+  .slider-t:before{content:"";position:absolute;height:12px;width:12px;left:3px;bottom:3px;background:#666;border-radius:50%;transition:.2s;}
+  input:checked+.slider-t{background:#4caf93;}
+  input:checked+.slider-t:before{transform:translateX(16px);background:#fff;}
+  .copy-msg{font-size:11px;color:#4caf93;margin-top:6px;min-height:14px;}
+  .dim{opacity:0.35;pointer-events:none;}
+  .comment{color:#555;}
+</style>
+
+<div class="wrap">
+  <h2>v4l2 camera controls</h2>
+  <p class="sub">blancs non cramés — script généré en temps réel</p>
+
+  <div class="section-title">Exposition <span class="badge" id="exp-badge">auto</span></div>
+  <div class="ctrl-bool">
+    <label>mode manuel</label>
+    <label class="toggle"><input type="checkbox" id="manual-exp" onchange="toggleExp()"><span class="slider-t"></span></label>
+  </div>
+  <div id="exp-ctrl" class="dim">
+    <div class="ctrl">
+      <label>exposure_time_absolute</label>
+      <input type="range" min="1" max="300" value="80" id="exposure" oninput="upd('exposure','exp-val');gen()">
+      <span class="val" id="exp-val">80</span>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section-title">Image</div>
+  <div class="ctrl"><label>brightness</label><input type="range" min="-64" max="64" value="-5" id="brightness" oninput="upd('brightness','br-val');gen()"><span class="val" id="br-val">-5</span></div>
+  <div class="ctrl"><label>contrast</label><input type="range" min="0" max="95" value="0" id="contrast" oninput="upd('contrast','ct-val');gen()"><span class="val" id="ct-val">0</span></div>
+  <div class="ctrl"><label>saturation</label><input type="range" min="0" max="255" value="66" id="saturation" oninput="upd('saturation','sat-val');gen()"><span class="val" id="sat-val">66</span></div>
+  <div class="ctrl"><label>gamma</label><input type="range" min="64" max="300" value="130" id="gamma" oninput="upd('gamma','gm-val');gen()"><span class="val" id="gm-val">130</span></div>
+  <div class="ctrl"><label>sharpness</label><input type="range" min="0" max="7" value="0" id="sharpness" oninput="upd('sharpness','sh-val');gen()"><span class="val" id="sh-val">0</span></div>
+  <div class="ctrl"><label>backlight_compensation</label><input type="range" min="36" max="160" value="50" id="backlight" oninput="upd('backlight','bl-val');gen()"><span class="val" id="bl-val">50</span></div>
+
+  <hr>
+
+  <div class="section-title">Balance des blancs</div>
+  <div class="ctrl-bool">
+    <label>white_balance_automatic</label>
+    <label class="toggle"><input type="checkbox" id="wb-auto" checked onchange="toggleWB()"><span class="slider-t"></span></label>
+  </div>
+  <div id="wb-ctrl" class="dim">
+    <div class="ctrl">
+      <label>white_balance_temperature</label>
+      <input type="range" min="2800" max="6500" value="4600" id="wb-temp" oninput="upd('wb-temp','wbt-val');gen()">
+      <span class="val" id="wbt-val">4600</span>
+    </div>
+  </div>
+  <div class="ctrl"><label>hue</label><input type="range" min="-2000" max="2000" value="0" id="hue" oninput="upd('hue','hue-val');gen()"><span class="val" id="hue-val">0</span></div>
+
+  <hr>
+
+  <div class="section-title">Fréquence secteur</div>
+  <div class="ctrl-select">
+    <label>power_line_frequency</label>
+    <select id="plf" onchange="gen()">
+      <option value="0">Disabled</option>
+      <option value="1" selected>50 Hz</option>
+      <option value="2">60 Hz</option>
+    </select>
+  </div>
+
+  <hr>
+
+  <div class="section-title">Script</div>
+  <div class="cmd-block" id="cmd-out"></div>
+  <div class="btn-row">
+    <button class="primary" onclick="copyScript()">Copier</button>
+    <button onclick="reset()">Reset</button>
+  </div>
+  <p class="copy-msg" id="copy-msg"></p>
+</div>
+
+<script>
+function upd(id, outId) {
+  document.getElementById(outId).textContent = document.getElementById(id).value;
+}
+function toggleExp() {
+  const on = document.getElementById('manual-exp').checked;
+  document.getElementById('exp-ctrl').className = on ? '' : 'dim';
+  document.getElementById('exp-badge').textContent = on ? 'manuel' : 'auto';
+  document.getElementById('exp-badge').className = on ? 'badge ok' : 'badge';
+  gen();
+}
+function toggleWB() {
+  const on = !document.getElementById('wb-auto').checked;
+  document.getElementById('wb-ctrl').className = on ? '' : 'dim';
+  gen();
+}
+function gen() {
+  const manualExp = document.getElementById('manual-exp').checked;
+  const wbAuto = document.getElementById('wb-auto').checked;
+  const v = id => document.getElementById(id).value;
+  let L = ['#!/bin/bash',''];
+  if (manualExp) {
+    L.push('v4l2-ctl --set-ctrl=auto_exposure=1');
+    L.push('sleep 0.5');
+    L.push('v4l2-ctl --set-ctrl=exposure_time_absolute='+v('exposure'));
+  } else {
+    L.push('v4l2-ctl --set-ctrl=auto_exposure=3');
+  }
+  L.push('v4l2-ctl --set-ctrl=brightness='+v('brightness'));
+  L.push('v4l2-ctl --set-ctrl=contrast='+v('contrast'));
+  L.push('v4l2-ctl --set-ctrl=saturation='+v('saturation'));
+  L.push('v4l2-ctl --set-ctrl=hue='+v('hue'));
+  L.push('v4l2-ctl --set-ctrl=gamma='+v('gamma'));
+  L.push('v4l2-ctl --set-ctrl=sharpness='+v('sharpness'));
+  L.push('v4l2-ctl --set-ctrl=backlight_compensation='+v('backlight'));
+  if (wbAuto) {
+    L.push('v4l2-ctl --set-ctrl=white_balance_automatic=1');
+  } else {
+    L.push('v4l2-ctl --set-ctrl=white_balance_automatic=0');
+    L.push('sleep 0.2');
+    L.push('v4l2-ctl --set-ctrl=white_balance_temperature='+v('wb-temp'));
+  }
+  L.push('v4l2-ctl --set-ctrl=power_line_frequency='+v('plf'));
+  L.push('');
+  L.push('echo "done."');
+  document.getElementById('cmd-out').textContent = L.join('\n');
+}
+function copyScript() {
+  navigator.clipboard.writeText(document.getElementById('cmd-out').textContent).then(() => {
+    const m = document.getElementById('copy-msg');
+    m.textContent = 'copié.';
+    setTimeout(() => m.textContent = '', 2000);
+  });
+}
+function reset() {
+  document.getElementById('manual-exp').checked = false;
+  document.getElementById('wb-auto').checked = true;
+  const vals = {exposure:80,brightness:-5,contrast:0,saturation:66,gamma:130,sharpness:0,backlight:50,'wb-temp':4600,hue:0};
+  const outs = {exposure:'exp-val',brightness:'br-val',contrast:'ct-val',saturation:'sat-val',gamma:'gm-val',sharpness:'sh-val',backlight:'bl-val','wb-temp':'wbt-val',hue:'hue-val'};
+  for (const [id, val] of Object.entries(vals)) {
+    document.getElementById(id).value = val;
+    document.getElementById(outs[id]).textContent = val;
+  }
+  document.getElementById('plf').value = 1;
+  toggleExp(); toggleWB(); gen();
+}
+gen();
+</script>
